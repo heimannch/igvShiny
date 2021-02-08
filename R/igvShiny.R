@@ -41,7 +41,7 @@ igvShiny <- function(options, width = NULL, height = NULL, elementId = NULL, dis
   stopifnot(options$genomeName %in% supportedGenomes)
   state[["requestedHeight"]] <- height
 
-  printf("--- ~/github/igvShiny/R/igvShiny ctor");
+  #printf("--- ~/github/igvShiny/R/igvShiny ctor");
 
   htmlwidgets::createWidget(
     name = 'igvShiny',
@@ -72,7 +72,7 @@ igvShiny <- function(options, width = NULL, height = NULL, elementId = NULL, dis
 igvShinyOutput <- function(outputId, width = '100%', height = '400px')
 {
     if("requestedHeight" %in% ls(state)){
-      printf("setting height from state")
+      #printf("setting height from state")
       height <- state[["requestedHeight"]]
       }
 
