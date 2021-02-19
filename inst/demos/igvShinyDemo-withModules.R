@@ -1,4 +1,5 @@
 library(shiny)
+library(magrittr)
 library(igvShiny)
 library(GenomicAlignments)
 #----------------------------------------------------------------------------------------------------
@@ -90,8 +91,8 @@ igv_server <-  function(input, output, session) {
    observeEvent(input$addGwasTrackButton, {
       printf("---- addGWASTrack")
       printf("current working directory: %s", getwd())
-      showGenomicRegion(session, id="igvShiny_0", "chr19:45,248,108-45,564,645")
-      loadGwasTrack(session, id="igvShiny_0", trackName="gwas", tbl=tbl.gwas, deleteTracksOfSameName=FALSE)
+      showGenomicRegion(session, id=session$ns("igvShiny_0"), "chr19:45,248,108-45,564,645")
+      loadGwasTrack(session, id=session$ns("igvShiny_0"), trackName="gwas", tbl=tbl.gwas, deleteTracksOfSameName=FALSE)
       })
 
    observeEvent(input$addBamViaHttpButton, {
