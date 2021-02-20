@@ -12,7 +12,7 @@ addResourcePath("tracks", "tracks")
 f <- system.file(package="igvShiny", "extdata", "gwas.RData")
 stopifnot(file.exists(f))
 tbl.gwas <- tbl.gwas <- iatlas.api.client::query_germline_gwas_results(datasets = "TCGA") %>% 
-  dplyr::select(SNPS = snp_rsid, cptid = snp_name, CHR_ID = snp_chr, CHR_POS = snp_bp, 'P.VALUE'= p_value)
+  dplyr::select(SNPS = snp_rsid, cptid = snp_name, CHR_ID = snp_chr, CHR_POS = snp_bp, 'P.VALUE'= p_value, feature_display)
 ns.sep <- "."
 #----------------------------------------------------------------------------------------------------
 igv_ui = function(id){
@@ -49,13 +49,13 @@ igv_server <-  function(input, output, session) {
     printf("--- search")
     searchString = isolate(input$roi)
     if(nchar(searchString) > 0)
-      showGenomicRegion(session, id="igvShiny_0", searchString)
+      showGenomicRegion(session, id=session$ns("igvShiny_0"), searchString)
   })
   observeEvent(input$addGwasTrackButton, {
     printf("---- addGWASTrack")
     printf("current working directory: %s", getwd())
-    showGenomicRegion(session, id=session$ns("igvShiny_0"), "chr19:45,248,108-45,564,645")
-    loadGwasTrack(session, id=session$ns("igvShiny_0"), trackName="GWAS", tbl=tbl.gwas, deleteTracksOfSameName=FALSE)
+    #showGenomicRegion(session, id=session$ns("igvShiny_0"), "chr19:45,248,108-45,564,645")
+    loadGwasTrack(session, id=session$ns("igvShiny_0"), trackName="GWAS", tbl=tbl.gwas,ymin = 6, ymax = 15, deleteTracksOfSameName=FALSE)
   })
   observeEvent(input[[sprintf("currentGenomicRegion.%s", "igvShiny_0")]], {
     newLoc <- input[[sprintf("currentGenomicRegion.%s", "igvShiny_0")]]
@@ -72,7 +72,7 @@ igv_server <-  function(input, output, session) {
   output$igvShiny_0 <- renderIgvShiny(
     igvShiny(list(
       genomeName=genomes[i],
-      initialLocus=loci[i],
+      initialLocus="all", #loci[i],
       displayMode="SQUISHED"
     ))
   )
