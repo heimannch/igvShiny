@@ -1,7 +1,7 @@
 library(shiny)
 library(igvShiny)
 library(GenomicAlignments)
-library(htmlwidgets)
+library(later)
 #----------------------------------------------------------------------------------------------------
 # we need a local directory to write files - for instance, a vcf file representing a genomic
 # region of interest.  we then tell shiny about that directory, so that shiny's built-in http server
@@ -117,6 +117,12 @@ server = function(input, output, session) {
       removeUserAddedTracks(session, id="igvShiny_0")
       })
 
+    observeEvent(input$igvReady, {
+        printf("--- igvReady")
+        containerID <- input$igvReady
+        printf("igv ready, %s", containerID)
+        loadBedTrack(session, id=containerID, trackName="bed.ready", tbl=tbl.bed, color="red");
+        })
 
    observeEvent(input$trackClick, {
        printf("--- trackclick event")
@@ -128,6 +134,16 @@ server = function(input, output, session) {
        printf("--- igv-trackClick event")
        x <- input[["igv-trackClick"]]
        print(x)
+       attribute.name.positions <- grep("name", names(x))
+       attribute.value.positions <- grep("value", names(x))
+       attribute.names <- as.character(x)[attribute.name.positions]
+       attribute.values <- as.character(x)[attribute.value.positions]
+       tbl <- data.frame(name=attribute.names,
+                         value=attribute.values,
+                         stringsAsFactors=FALSE)
+       dialogContent <- renderTable(tbl)
+       html <- HTML(dialogContent())
+       showModal(modalDialog(html, easyClose=TRUE))
        })
 
    observeEvent(input$getChromLocButton, {
@@ -148,16 +164,23 @@ server = function(input, output, session) {
       })
 
    genomes <- c("hg38", "hg19", "mm10", "tair10", "rhos")
-   loci <- c("chr5:88,466,402-89,135,305", "MEF2C", "Mef2c", "1:7,432,931-7,440,395", "NC_007494.2:370,757-378,078")
-   i <- 2
+   loci <- c("chr5:88,466,402-89,135,305",  "chr1:7,426,231-7,453,241", "MEF2C", "Mef2c",
+             "1:7,432,931-7,440,395", "NC_007494.2:370,757-378,078",
+             "chr1:6,575,383-8,304,088")
 
-   output$igvShiny_0 <- renderIgvShiny(
-     igvShiny(list(
-        genomeName=genomes[i],
-        initialLocus=loci[i],
-        displayMode="SQUISHED"
-        ))
-      )
+   output$igvShiny_0 <- renderIgvShiny({
+     cat("--- starting renderIgvShiny\n");
+     x <- igvShiny(list(genomeName=genomes[2],
+                        initialLocus=loci[7],
+                        displayMode="SQUISHED",
+                        tracks=list()
+                        ))
+     cat("--- ending renderIgvShiny\n");
+     #later(function() {
+     #    loadBedTrack(session, id="igvShiny_0", trackName="bed.start", tbl=tbl.bed, color="red");
+     #    }, 8)
+     return(x)
+     })
 
    #output$igvShiny.1 <- renderIgvShiny(
    #  igvShiny(list(
@@ -170,16 +193,18 @@ server = function(input, output, session) {
 #----------------------------------------------------------------------------------------------------
 deploy <-function()
 {
+   repos <- options("repos")[[1]]
+   stopifnot(sort(names(repos)) == c("BioCann", "BioCsoft", "CRAN"))
+   stopifnot(repos$BioCann=="https://bioconductor.org/packages/3.12/data/annotation")
+   stopifnot(repos$BioCsoft=="https://bioconductor.org/packages/3.12/bioc")
+   stopifnot(repos$CRAN=="https://cran.microsoft.com")
+   require(devtools)
+
+   Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=FALSE)
+
+   install_github("paul-shannon/igvShiny", force=TRUE)
+
    require(rsconnect)
-   #rsconnect::setAccountInfo(name='hoodlab',
-   #                          token='41E779ABC50F6A98036C95AEEA1A92F7',
-   #                          secret='')
-   setRepositories(addURLs=c(BioCsoft="https://bioconductor.org/packages/3.12/bioc",
-                             BioCann="https://bioconductor.org/packages/3.12/data/annotation",
-                             BioCexp="https://bioconductor.org/packages/3.12/data/experiment",
-                             BioC="https://bioconductor.org/packages/3.12/bioc",
-                             CRAN="https://cran.microsoft.com"),
-                   graphics=FALSE)
 
    deployApp(account="hoodlab",
               appName="igvShinyDemo",
