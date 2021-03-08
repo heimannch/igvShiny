@@ -143,7 +143,7 @@ igv_server <-  function(input, output, session) {
       # printf("--- getChromLoc event")
       # sends message to igv.js in browser; currentGenomicRegion.<id> event sent back
       # see below for how that can be captured and displayed
-      getGenomicRegion(session, id="igv-igvShiny_0")
+      getGenomicRegion(session, id=ns("igvShiny_0"))
       print(sprintf("getChromLocButton, currentGenomicRegion.%s", ns("igvShiny_0")))
       })
 
