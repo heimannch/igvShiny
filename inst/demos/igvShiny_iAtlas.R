@@ -97,12 +97,36 @@ igv_server <-  function(input, output, session) {
     x <- input$trackClick
     print(x)
   })
-  observeEvent(input[["igv-trackClick"]], {
-    printf("--- igv-trackClick event")
-    x <- input[["igv-trackClick"]]
-    print(x)
+  # observeEvent(input[["igv-trackClick"]], {
+  #   printf("--- igv-trackClick event")
+  #   x <- input[["igv-trackClick"]]
+  #   print(x)
+  # })
+  
+  observeEvent(input$trackClick, {
+    printf("--- igv-trackClick popup")
+    x <- input$trackClick
+ 
+    attribute.name.positions <- grep("name", names(x))
+    attribute.value.positions <- grep("value", names(x))
+    attribute.names <- as.character(x)[attribute.name.positions]
+    attribute.values <- as.character(x)[attribute.value.positions]
+    tbl <- data.frame(name=attribute.names,
+                      value=attribute.values,
+                      stringsAsFactors=FALSE)
+    dialogContent <- renderTable(tbl)
+    html <- HTML(dialogContent())
+    showModal(modalDialog(html, easyClose=TRUE))
   })
+  
+  shiny::observeEvent(input$igvReady, {
+    containerID <- input$igvReady
+    printf("igv ready, %s", containerID)
+    loadGwasTrack(session, id=session$ns("igvShiny_0"), trackName="GWAS", tbl=gwas_df(), deleteTracksOfSameName=FALSE)
+  })
+  
   observeEvent(input$addGwasTrackButton, {
+    print(input$igvReadyTest)
     #showGenomicRegion(session, id=session$ns("igvShiny_0"), "chr19:45,248,108-45,564,645")
     loadGwasTrack(session, id=session$ns("igvShiny_0"), trackName="GWAS", tbl=gwas_df(),ymin = 5, ymax = 1+max(-log10(gwas_df()$P.VALUE)), deleteTracksOfSameName=FALSE)
   })
@@ -131,11 +155,11 @@ igv_server <-  function(input, output, session) {
 }
 
 server <- function(input, output, session){
-  callModule(igv_server, "germline-germline_gwas-module")
+  callModule(igv_server, "igv")
 }
 
 ui <- fluidPage(
-  igv_ui(id="germline-germline_gwas-module")
+  igv_ui(id="igv")
 )
 
 runApp(shinyApp(ui = ui, server = server), port=9833)
